@@ -514,10 +514,6 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 break;
 
             case LOG_EQ:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case LOG_NONEQ:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
@@ -546,30 +542,9 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 break;
 
             case LOG_LEQ:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case LOG_MEQ:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
-            case LOG_NEQ:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case ADD:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case SUBSTRACT:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case MULTIPLY:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
@@ -597,10 +572,6 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 return OK;
 
             case L_BRAC:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case R_BRAC:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
@@ -619,18 +590,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 break;
 
             case COMMA:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
             case COLON:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
-            //case LEX_ERR:
-                //return LEX_ERROR; // lex.err
-
             case LEX_EOF:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);

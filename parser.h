@@ -74,7 +74,7 @@ do { \
         return INTERNAL_ERROR; \
     strcpy(dest, shared_vars.c_token->data)
 
-#define IS_OP(token) (shared_vars.token->type == LOG_EQ || shared_vars.token->type == LOG_NONEQ || shared_vars.token->type == LOG_MORE || shared_vars.token->type == LOG_LESS || shared_vars.token->type == LOG_LEQ || shared_vars.token->type == LOG_NEQ \
+#define IS_OP(token) (shared_vars.token->type == LOG_EQ || shared_vars.token->type == LOG_NONEQ || shared_vars.token->type == LOG_MORE || shared_vars.token->type == LOG_LESS || shared_vars.token->type == LOG_LEQ \
  || shared_vars.token->type == ADD || shared_vars.token->type == SUBSTRACT || shared_vars.token->type == MULTIPLY || shared_vars.token->type == DIVIDE || shared_vars.token->type == IDIVIDE)
 
 #define IS_TERM(token) (shared_vars.token->type == ID || IS_VALUE(token))
