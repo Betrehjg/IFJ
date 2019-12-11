@@ -13,7 +13,7 @@
 
 int main() {
     //test
-    shared_vars.file = fopen("code_gen1", "r");
+    shared_vars.file = stdin;
 
     //alokace pameti
     shared_vars.c_token = malloc(sizeof(t_token));
