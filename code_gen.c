@@ -1,6 +1,6 @@
 /**
  * @file: code_gen.c
- * @authors: Matej Dubec, Samuel Spišák, Michal Zobaník, Libor Malínek
+ * @authors: Matej Dubec(xdubec00), Samuel Spišák (xspisa02), Michal Zobaník (xzoban01), Libor Malínek(xmalin30)
  *
  * zdrojovy soubor pro generovani IFJcode
  */
