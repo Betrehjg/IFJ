@@ -1,3 +1,7 @@
+//
+// Autor: Malínek Libor, Listopad 2019
+//
+
 #include "symtable.h"
 #include "errors.h"
 #include "string.h"
