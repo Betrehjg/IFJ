@@ -1,3 +1,10 @@
+/**
+ * @file: code_gen.c
+ * @authors:
+ *
+ * zdrojovy soubor pro generovani IFJcode
+ */
+
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>

@@ -1,3 +1,10 @@
+/**
+ * @file: code_gen.h
+ * @authors:
+ *
+ * hlavickovy soubor s funkcemi pro generovani IFJcode
+ */
+
 #ifndef PARSER_CODE_GEN_H
 #define PARSER_CODE_GEN_H
 

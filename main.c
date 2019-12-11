@@ -1,3 +1,8 @@
+/**
+ * @file: main.c
+ * @authors:
+ */
+
 #include <stdio.h>
 #include "parser.h"
 #include "stack.h"
@@ -53,6 +58,6 @@ int main() {
     if (shared_vars.undef_cnt != 0)
         return SEM_ERROR;
 
-        return 0;
+    return 0;
     #endif
 }

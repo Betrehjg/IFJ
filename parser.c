@@ -1,3 +1,10 @@
+/**
+ * @file: parser.c
+ * @author: Michal Zobaník (xzoban01)
+ *
+ * Zdrojovy soubor pro parser prekladace
+ */
+
 #include "parser.h"
 #include "scanner.h"
 #include "psa.h"
@@ -6,7 +13,6 @@
 #include <string.h>
 
 int prog() {
-
     //<prog> -> <stat_list> <func_def>
     if (is_expr() || shared_vars.c_token->type == KW_IF || shared_vars.c_token->type == ID || shared_vars.c_token->type == KW_WHILE || shared_vars.c_token->type == KW_PASS || IS_VALUE(c_token)) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
@@ -30,6 +36,7 @@ int func_def() {
         symtableInit(&shared_vars.loc_symtable);
 
         GET_TOKEN();
+
         //ulozeni contentu nasledujiciho tokenu jako jmeno funkce
         COPY_TOKEN_DATA(name);
 
@@ -74,9 +81,9 @@ int stat_list() {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        //nic negeneruju
-        CHECK_RULE_WARGS(sp_expr(false, NULL));
 
+        CHECK_RULE_WARGS(sp_expr(false, NULL));
+        //nic negeneruju
         CHECK_KEYWORD(EOL);
 
         return stat();
