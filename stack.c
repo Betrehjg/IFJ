@@ -5,6 +5,7 @@
 #include "stack.h"
 #include <stdio.h>
 #include <malloc.h>
+#include <mem.h>
 
 /// 1)Funkcie pre prácu so zásobníkom:
 
@@ -194,16 +195,17 @@ int eStackPush (eStack *s, t_token * current_token, PSA_table_index_enum index, 
 
     eItem *pom;
 
-    if ((pom = (eItem *) malloc(sizeof(eItem) + ((current_token->data_size) * sizeof(char)))) != NULL) {
+    if ((pom = (eItem *) malloc(sizeof(eItem))) != NULL){
+        if((pom->data = malloc(sizeof(char)*current_token->data_size + 1)) == NULL) return INTERNAL_ERROR;
         pom->is_terminal = isT;
         pom->action = E;
-        pom->data = current_token->data;
 
-        printf("%s\n\n", pom->data);
+        strcpy(pom->data, current_token->data);
 
         pom->data_size = current_token->data_size;
         pom->table_symbol = tableSymbol;
         pom->index = index;
+
         pom->next = s->top;
         s->top = pom;
         return OK;
@@ -223,15 +225,16 @@ int eItemStackPush (eStack *s, eItem *nextTop) {
 
     eItem *pom;
 
-    if ((pom = (eItem *) malloc(sizeof(eItem) + ((nextTop->data_size) * sizeof(char)))) != NULL) {
+    if ((pom = (eItem *) malloc(sizeof(eItem))) != NULL){
+        if((pom->data = malloc(sizeof(char)*nextTop->data_size + 1)) == NULL) return INTERNAL_ERROR;
         pom->is_terminal = nextTop->is_terminal;
         pom->action = E;
-        pom->data = nextTop->data;
+
+        strcpy(pom->data, nextTop->data);
+
         pom->data_size = nextTop->data_size;
         pom->table_symbol = nextTop->table_symbol;
         pom->index = nextTop->index;
-
-        printf("%s\n\n", pom->data);
 
         pom->next = s->top;
         s->top = pom;
