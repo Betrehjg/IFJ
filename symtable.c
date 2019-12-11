@@ -16,21 +16,21 @@ int BSTInsert(tBSTNodePtr *RootPtr, char *Key, void *Content, tNodeType typ)
 {
     if(*RootPtr == NULL)
     {
-        tBSTNodePtr pomocna;
-        pomocna = malloc(sizeof(struct tBSTNode));
-        if(pomocna == NULL)
+        tBSTNodePtr helpvar;
+        helpvar = malloc(sizeof(struct tBSTNode));
+        if(helpvar == NULL)
             return INTERNAL_ERROR;
 
-        pomocna->Key = malloc(strlen(Key) + 1);
-        if (pomocna->Key == NULL)
+        helpvar->Key = malloc(strlen(Key) + 1);
+        if (helpvar->Key == NULL)
             return INTERNAL_ERROR;
 
-        pomocna->nodeType = typ;
-        pomocna->BSTNodeCont = Content;
-        strcpy(pomocna->Key, Key);
-        pomocna->LPtr = NULL;
-        pomocna->RPtr = NULL;
-        *RootPtr = pomocna;
+        helpvar->nodeType = typ;
+        helpvar->BSTNodeCont = Content;
+        strcpy(helpvar->Key, Key);
+        helpvar->LPtr = NULL;
+        helpvar->RPtr = NULL;
+        *RootPtr = helpvar;
     }
     else
     {
@@ -90,10 +90,10 @@ void ReplaceByRightmost (tBSTNodePtr PtrReplaced, tBSTNodePtr *RootPtr) //pomocn
         {
             PtrReplaced->BSTNodeCont = (*RootPtr)->BSTNodeCont;
             PtrReplaced->Key = (*RootPtr)->Key;
-            tBSTNodePtr pomocna = *RootPtr;
+            tBSTNodePtr helpvar = *RootPtr;
             *RootPtr = (*RootPtr)->LPtr;
-            free(pomocna->BSTNodeCont);
-            free(pomocna);
+            free(helpvar->BSTNodeCont);
+            free(helpvar);
         }
     }
 
@@ -109,18 +109,18 @@ void BSTDelete(tBSTNodePtr *RootPtr, char *Key) //odstranit podle key
     {
         if((*RootPtr)->Key == Key) //jsme na prvku, ktery chceme uvolnit
         {
-            tBSTNodePtr pomocna = (*RootPtr);
+            tBSTNodePtr helpvar = (*RootPtr);
             if((*RootPtr)->LPtr == NULL) //ma pouze praveho potomka
             {
-                *RootPtr = pomocna->RPtr;
-                free(pomocna->BSTNodeCont);
-                free(pomocna);
+                *RootPtr = helpvar->RPtr;
+                free(helpvar->BSTNodeCont);
+                free(helpvar);
             }
             else if((*RootPtr)->RPtr == NULL)//ma pouze leveho potomka
             {
-                *RootPtr = pomocna->LPtr;
-                free(pomocna->BSTNodeCont);
-                free(pomocna);
+                *RootPtr = helpvar->LPtr;
+                free(helpvar->BSTNodeCont);
+                free(helpvar);
             }
             else //ma dva potomky
             {
