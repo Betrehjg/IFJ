@@ -1,3 +1,7 @@
+//
+// Autor: Malínek Libor, Listopad 2019
+//
+
 #ifndef SYMTABLE_H
 #define SYMTABLE_H
 
