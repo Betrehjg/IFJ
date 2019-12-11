@@ -286,6 +286,9 @@ int sp_expr(bool local, t_token *src_token) {
             return shared_vars.ret_value;
 
         //TODO: ziskat src
+        src_token->type = INTEGER;
+        src_token->data_size = 0;
+        src_token->data = "";
         return expression(shared_vars.c_token, local);
     } //<sp_expr> -> <value>
     else if (IS_VALUE(c_token)) {
