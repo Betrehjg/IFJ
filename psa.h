@@ -1,5 +1,5 @@
 //
-// Created by Samuel Spišák on 25/11/2019.
+// Created by Samuel Spišák (xspisa02) on 25/11/2019.
 //
 
 #ifndef PROJEKTIFJ19_PSA_H
@@ -17,9 +17,8 @@ typedef enum
 } PSA_operations_enum;
 
 /**
- * @enum Rules used in parsing.
+ * @enum pravidla PSA
  */
-
 typedef enum
 {
     E_EQ_E,		    /// E -> E = E
@@ -38,6 +37,9 @@ typedef enum
     INVALID_RULE	/// rule doesn't exist
 } PSA_rules_enum;
 
+/**
+ * @enum indexy PSA tabulky.
+ */
 typedef enum
 {
     T_PLUS_MINUS,		///  +-
@@ -52,7 +54,7 @@ typedef enum
 } PSA_table_index_enum;
 
 /**
- * @enum Symbols used in precedence analysis.
+ * @enum symboly PSA
  */
 typedef enum
 {
@@ -73,22 +75,16 @@ typedef enum
     INT_N,		    /// int
     DOUBLE_N,     	/// double
     STRING,			/// string
-    NONE,            /// "None" special value
-    DOLLAR,			/// $
-
-///nepouzite, mozno bude eventualne treba
-
-//    STOP,			/// stop symbol used when reducing
-//    NON_TERM		/// non-terminal
-
+    NONE,           /// "None" special value
+    DOLLAR		    /// $
 } PSA_symbol_enum;
 
 
 /**
- * Used to parse <expression> in rules.
+ * analyzuje <expression> v LL gramatike
  *
- * @param data Pointer to parser's internal data. TODO
- * @return Given exit code.
+ * @param current_token - aktualny token v scanneri
+ * @param local - scope
  */
 int expression(t_token * current_token, bool local, t_token *src_token);
 
