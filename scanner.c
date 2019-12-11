@@ -147,7 +147,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 }
                 else if (isdigit(character)) {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
-                    if (character == 0) {
+                    if (character == '0') {
                         zeroIntVal = 1; // uz som zadal 0, dalsia v ramci jedneho cisla hned za sebou byt nemoze
                     }
                     current_state = INTEGER;
