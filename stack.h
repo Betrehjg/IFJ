@@ -8,20 +8,20 @@
 #include "token.h"
 #include "psa.h"
 
-typedef struct exprItem {      /// struktura pre polozku zasobnika vyrazu
+typedef struct exprItem {  // Struktura pre polozku zasobnika vyrazu
     int is_terminal;
     PSA_operations_enum action;
     PSA_table_index_enum index;
     PSA_symbol_enum table_symbol;
     char *data;
-    t_token src_token; //ID, hodnota
-    char *var_name; //nazev promene ve ktere je ta vec
-    int data_size;          //pocet znakov tokenu
-    struct exprItem *next;                // dalsia polozka
+    t_token src_token; // ID, hodnota
+    char *var_name; // nazov premennej v ktorej je ta vec
+    int data_size;  //pocet znakov tokenu
+    struct exprItem *next; // dalsia polozka
 } eItem;
 
-typedef struct {               // struktura pre zasobnik
-    struct exprItem *top;                 // ukazatel na vrchol zásobníka
+typedef struct { // struktura pre zasobnik
+    struct exprItem *top; // ukazatel na vrchol zásobníku
 } eStack;
 
 
