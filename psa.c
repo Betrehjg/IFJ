@@ -1,5 +1,5 @@
 //
-// Created by Samuel Spišák (xspisa02) on 25/11/2019.
+// Created by Samuel Spišák on 25/11/2019.
 //
 
 #include "psa.h"
@@ -15,8 +15,8 @@ const int PSA_table[8][8] =
          // 	|+- | */| \ | r | ( | ) | i | $ |
                 { R , L , L , R , L , R , L , R }, // +-
                 { R , R , R , R , L , R , L , R }, // */
-                { R , R , R , R , L , R , L , R }, // //
-                { L , L , L , N , L , R , L , R }, // = != <= < >= >
+                { R , L , R , R , L , R , L , R }, // //
+                { L , L , L , N , L , R , L , R }, // = <> <= < >= >
                 { L , L , L , L , L , E , L , N }, // (
                 { R , R , R , R , N , R , N , R }, // )
                 { R , R , R , R , N , R , N , R }, // i (int, double, string, id)
@@ -24,9 +24,7 @@ const int PSA_table[8][8] =
         };
 
 /**
- * Prevod zo symbol enumu na index tabulky.
- * @param symbol PSA
- * @return index PSA tabulky
+ * Prevod z symbol enumu na index tabulky.
  */
 
 static PSA_table_index_enum get_index_from_symbol (PSA_symbol_enum symbol)
@@ -72,8 +70,6 @@ static PSA_table_index_enum get_index_from_symbol (PSA_symbol_enum symbol)
 
 /**
  * Prevod z typu t_state na typ symbol ktory sa pouziva pri identifikaci pravidla
- * @param token - token na prevod
- * @return symbol podla typu tokenu
  */
 
 static PSA_symbol_enum get_symbol_from_token(t_token* token)
@@ -138,8 +134,7 @@ static eItem * first_terminal (eStack *s){
 
 /**
  * zisti index prveho terminalu v stacku
- * @param s pushdown stack
- * @return firstTerminal index prveho terminalu v s
+ * @return firstTerminal index
  */
 
 static PSA_table_index_enum terminal_index(eStack *s){
@@ -236,9 +231,6 @@ static PSA_rules_enum check_rule (int symbolCount, eStack *pushdownS) {
 
 /**
  * Funkcia na redukciu vyrazu podla najdeneho pravidla
- * @param rule - pravidlo
- * @param pushdownS - pushdown stack
- * @param local - scope
  */
 
 static int apply_rule(PSA_rules_enum rule, eStack *pushDownS, bool local) {
@@ -312,6 +304,7 @@ static int apply_rule(PSA_rules_enum rule, eStack *pushDownS, bool local) {
             tmp_name = malloc(strlen("%%psa_tmp_var") + 1 + 30);
             sprintf(tmp_name, "%%psa_tmp_var%d", counter++);
             gen_def_var(tmp_name, local);
+            gen_type_control(ID, tmp->next->next->var_name, ID, tmp->var_name, local);
             gen_aritm_op(rule, tmp->next->next->var_name, tmp->var_name, tmp_name, local);
 
             ///Pop 2 poloziek, poslednu nastavim na neterminal
@@ -419,10 +412,8 @@ static int psAnalysis (eStack *inputS, eStack *pushdownS, bool local) {
 
 /**
  * Funkcia volana z parseru pri najdenu vyrazu
- * @param current_token - shared_variables.c_token
- * @param local - scope
- * @param src_token
- * @return result - vysledok analyzy
+ * @param c_token
+ * @return result
  */
 
 int expression(t_token * current_token, bool local, t_token *src_token){
@@ -478,7 +469,7 @@ int expression(t_token * current_token, bool local, t_token *src_token){
 
         result = psAnalysis(inputReverse, pushDownStack, local);
 
-        if (!isEmpty(pushDownStack))
+        if (result == OK)
         {
             src_token->data = eStackTopItem(pushDownStack)->var_name;
             src_token->type = ID;

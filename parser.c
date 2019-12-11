@@ -81,8 +81,8 @@ int stat_list() {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-
-        CHECK_RULE_WARGS(sp_expr(false, NULL));
+        t_token src_token;
+        CHECK_RULE_WARGS(sp_expr(false, &src_token));
         //nic negeneruju
         CHECK_KEYWORD(EOL);
 
@@ -184,7 +184,8 @@ int func_stat_list(char *func_name) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        CHECK_RULE_WARGS(sp_expr(true, NULL));
+        t_token src_token;
+        CHECK_RULE_WARGS(sp_expr(true, &src_token));
         CHECK_KEYWORD(EOL);
 
         return func_stat(func_name);
