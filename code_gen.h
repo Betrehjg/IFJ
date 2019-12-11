@@ -21,6 +21,8 @@ int gen_else();
 int gen_if_end();
 int gen_func_arg(char *name);
 int gen_func_call(char *name, int argc, stack *args_stack, bool local);
+int gen_return(char *func_name, t_token src_token, bool local);
+
 
 
 

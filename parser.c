@@ -33,7 +33,6 @@ int func_def() {
         //ulozeni contentu nasledujiciho tokenu jako jmeno funkce
         COPY_TOKEN_DATA(name);
 
-        //TODO: generovani zacatku fuknce, (label pro preskoceni)
         gen_func_start(name);
 
         CHECK_KEYWORD(ID);
@@ -51,7 +50,7 @@ int func_def() {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
-        CHECK_RULE(func_stat_list);
+        CHECK_RULE_WARGS(func_stat_list(name));
 
         CHECK_KEYWORD(DEDENT);
 
@@ -174,7 +173,7 @@ int arg_def(int *argc) {
     return SYN_ERROR;
 }
 
-int func_stat_list() {
+int func_stat_list(char *func_name) {
     //<func_stat_list> -> <sp_expr> EOL <func_stat>
     if (is_expr() || IS_VALUE(c_token)) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
@@ -183,7 +182,7 @@ int func_stat_list() {
         CHECK_RULE_WARGS(sp_expr(true, NULL));
         CHECK_KEYWORD(EOL);
 
-        return func_stat();
+        return func_stat(func_name);
 
     } //<func_stat_list> -> ID <stat_2> EOL <func_stat>
     else if (shared_vars.c_token->type == ID) {
@@ -194,7 +193,7 @@ int func_stat_list() {
 
         CHECK_KEYWORD(EOL);
 
-        return  func_stat();
+        return  func_stat(func_name);
     } //<func_stat_list> -> IF <sp_expr> : EOL INDENT <func_stat_list> DEDENT ELSE : EOL INDENT <func_stat_list> DEDENT <func_stat>
     else if (shared_vars.c_token->type == KW_IF) {
         GET_TOKEN();
@@ -208,7 +207,7 @@ int func_stat_list() {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
-        CHECK_RULE(func_stat_list);
+        CHECK_RULE_WARGS(func_stat_list(func_name));
         CHECK_KEYWORD(DEDENT);
         CHECK_KEYWORD(KW_ELSE);
         CHECK_KEYWORD(COLON);
@@ -217,11 +216,11 @@ int func_stat_list() {
 
         //TODO: generovani konce if(true) a zacatek else
 
-        CHECK_RULE(func_stat_list);
+        CHECK_RULE_WARGS(func_stat_list(func_name));
         CHECK_KEYWORD(DEDENT);
 
         //TODO: generovani konce if
-        return func_stat();
+        return func_stat(func_name);
     } //<func_stat_list> -> WHILE <sp_expr> : EOL INDENT <func_stat_list> DEDENT <func_stat>
     else if (shared_vars.c_token->type == KW_WHILE) {
         GET_TOKEN();
@@ -234,37 +233,37 @@ int func_stat_list() {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
-        CHECK_RULE(func_stat_list);
+        CHECK_RULE_WARGS(func_stat_list(func_name));
         CHECK_KEYWORD(DEDENT);
 
         //TODO: generovani smycky a  konce while
-        return func_stat();
+        return func_stat(func_name);
     } //<func_stat_list> -> PASS EOL <func_stat>
     else if (shared_vars.c_token->type == KW_PASS) {
         GET_TOKEN();
         CHECK_KEYWORD(EOL);
 
-        return func_stat();
+        return func_stat(func_name);
     } //<func_stat_list> -> RETURN <return_value> EOL <func_stat>
     else if (shared_vars.c_token->type == KW_RETURN) {
         GET_TOKEN();
 
-        CHECK_RULE(return_value);
+        CHECK_RULE_WARGS(return_value(func_name));
         CHECK_KEYWORD(EOL);
 
-        return func_stat();
+        return func_stat(func_name);
     }
 
     return SYN_ERROR;
 }
 
-int func_stat() {
+int func_stat(char *func_name) {
     //<stat> -> <func_stat_list>
     if (is_expr() || shared_vars.c_token->type == ID || shared_vars.c_token->type == KW_IF || shared_vars.c_token->type == KW_WHILE || shared_vars.c_token->type == KW_PASS || shared_vars.c_token->type == KW_RETURN  || IS_VALUE(c_token)) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        return func_stat_list();
+        return func_stat_list(func_name);
     } //<func_stat> -> eps
     else if (shared_vars.c_token->type == DEDENT) {
         return OK;
@@ -327,12 +326,12 @@ int stat_2(bool local, char *name) {
     if (shared_vars.c_token->type == ASSIGN) {
         GET_TOKEN();
 
+        t_token src_token;
+        CHECK_RULE_WARGS(assign(local, &src_token));
+
         //kontorla dest. ID
         if ((shared_vars.ret_value = sem_var_test(name, local, NULL, true)) != OK)
             return shared_vars.ret_value;
-
-        t_token src_token;
-        CHECK_RULE_WARGS(assign(local, &src_token));
 
         gen_assign(name, src_token, local);
         return OK;
@@ -358,7 +357,7 @@ int stat_2(bool local, char *name) {
     return SYN_ERROR;
 }
 
-int return_value() {
+int return_value(char *func_name) {
     //<return_value> -> <asign>
     if (is_expr() || shared_vars.c_token->type == ID || IS_VALUE(c_token)) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
@@ -367,13 +366,13 @@ int return_value() {
         t_token src_token;
         CHECK_RULE_WARGS(assign(true, &src_token));
 
-        gen_assign("$ret_val", src_token, true);
+        gen_return(func_name, src_token, true);
         return OK;
     } //<return_value> -> eps
     else if (shared_vars.c_token->type == EOL) {
         t_token src_token;
         src_token.type = KW_NONE;
-        gen_assign("$ret_val", src_token, true);
+        gen_return(func_name, src_token, true);
 
         return OK;
     }
@@ -551,15 +550,16 @@ int sem_func_test(char *name, bool defined, int argc) {
             if((shared_vars.ret_value = symtableInsertFunction(&shared_vars.glob_symtable, name, defined, argc)) != OK) \
                 return shared_vars.ret_value;
 
-            shared_vars.undef_cnt--;
+            (shared_vars.undef_cnt)--;
         } else if (defined == true && content->defined == true) { //redefinovani funkce
             return SEM_ERROR;
         }
 
         return OK;
     } else {
-        if (!defined)
-            shared_vars.undef_cnt++;
+        if (!defined) {
+            (shared_vars.undef_cnt)++;
+        }
 
         return symtableInsertFunction(&shared_vars.glob_symtable, name, defined, argc);
     }

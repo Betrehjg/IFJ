@@ -51,12 +51,17 @@ void gen_print_decl () {
                     "DEFVAR LF@$ret_val\n"
                     "DEFVAR LF@%%tmp\n"
                     "POPS LF@%%argc\n"
-                    "LABEL $print_loop\n"
                     "LT LF@%%tmp LF@%%argc int@1\n"
                     "JUMPIFEQ $print_loop_end LF@%%tmp bool@true\n"
                     "POPS LF@str\n"
                     "WRITE LF@str\n"
+                    "SUB LF@%%argc LF@%%argc int@1\n"
+                    "LABEL $print_loop\n"
+                    "LT LF@%%tmp LF@%%argc int@1\n"
+                    "JUMPIFEQ $print_loop_end LF@%%tmp bool@true\n"
                     "WRITE string@\\032\n"
+                    "POPS LF@str\n"
+                    "WRITE LF@str\n"
                     "SUB LF@%%argc LF@%%argc int@1\n"
                     "JUMP $print_loop\n"
                     "LABEL $print_loop_end\n"
@@ -261,12 +266,13 @@ int gen_assign(char *dest_name, t_token src_token, bool local) {
     char *dest = create_var(ID, dest_name, local);
     char *src = create_var(src_token.type, src_token.data, local);
 
-    if (dest == NULL)
+    if (dest == NULL || src == NULL)
         return INTERNAL_ERROR;
 
     fprintf(stdout, "MOVE %s %s\n", dest, src);
 
     free(dest);
+    free(src);
     return OK;
 }
 
@@ -274,7 +280,12 @@ int gen_func_start(char *func_name) {
     static int counter = 0;
 
     fprintf(stdout, "JUMP $%s_skip%d\n", func_name, counter);
-    fprintf(stdout, "LABEL %s\n", func_name);
+    fprintf(stdout, "LABEL %s\n"
+                    "PUSHFRAME\n"
+                    "DEFVAR LF@$ret_val\n"
+                    "DEFVAR LF@%%argc\n"
+                    "POPS LF@%%argc\n"
+                    "MOVE LF@$ret_val nil@nil\n", func_name);
 
     counter++;
     return OK;
@@ -301,9 +312,25 @@ int gen_func_arg(char *name) {
 int gen_func_end(char *func_name) {
     static int counter = 0;
 
-    fprintf(stdout, "LABEL $%s_skip%d\n", func_name, counter);
+    fprintf(stdout, "LABEL $%s_return\n"
+                    "POPFRAME\n"
+                    "RETURN\n"
+                    "LABEL $%s_skip%d\n", func_name, func_name, counter);
 
     counter++;
+    return OK;
+}
+
+int gen_return(char *func_name, t_token src_token, bool local) {
+    char *src = create_var(src_token.type, src_token.data, local);
+
+    if (src == NULL)
+        return INTERNAL_ERROR;
+
+    fprintf(stdout, "MOVE LF@$ret_val %s\n"
+                    "JUMP $%s_return", src, func_name);
+
+    free(src);
     return OK;
 }
 

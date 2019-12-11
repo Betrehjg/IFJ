@@ -15,12 +15,15 @@ int BSTInsert(tBSTNodePtr *RootPtr, char *Key, void *Content, tNodeType typ)
         tBSTNodePtr pomocna;
         pomocna = malloc(sizeof(struct tBSTNode));
         if(pomocna == NULL)
-        {
             return INTERNAL_ERROR;
-        }
+
+        pomocna->Key = malloc(strlen(Key) + 1);
+        if (pomocna->Key == NULL)
+            return INTERNAL_ERROR;
+
         pomocna->nodeType = typ;
         pomocna->BSTNodeCont = Content;
-        pomocna->Key = Key;
+        strcpy(pomocna->Key, Key);
         pomocna->LPtr = NULL;
         pomocna->RPtr = NULL;
         *RootPtr = pomocna;

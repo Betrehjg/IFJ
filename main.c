@@ -8,7 +8,7 @@
 
 int main() {
     //test
-    shared_vars.file = stdin;
+    shared_vars.file = fopen("code_gen1", "r");
 
     //alokace pameti
     shared_vars.c_token = malloc(sizeof(t_token));
@@ -53,6 +53,6 @@ int main() {
     if (shared_vars.undef_cnt != 0)
         return SEM_ERROR;
 
-    return OK;
+        return 0;
     #endif
 }

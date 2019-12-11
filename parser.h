@@ -32,10 +32,10 @@ int func_arg_next(bool local, int *argc, stack *args_stack);
 int value(bool local, t_token *src_token);
 int arg_def(int *argc);
 int arg_def_next(int *argc);
-int func_stat_list();
-int func_stat();
+int func_stat_list(char *func_name);
+int func_stat(char *func_name);
 int sp_expr(bool local, t_token *src_token);
-int return_value();
+int return_value(char *func_name);
 
 bool is_expr();
 int p_next_token();
