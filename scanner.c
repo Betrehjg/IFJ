@@ -1,5 +1,6 @@
 //
 // Created by Matej Dubec on 21.11.2019.
+// xdubec00 - IFJ SCANNER
 //
 
 #include <stdio.h>
@@ -35,9 +36,11 @@ t_state token_keyword (char *str) {
     }
     else return ID;
 }
-
+/// HLAVNY LOOP
+//  Funkcia, volana v parsri, pozostava z cyklickeho citania znakov zo standardneho vstupu,
+//  dokym sa nam nepodari nacitat nejaky validny lexem
 int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int *newline) {
-
+    // pomocne premenne
     static t_state previous_state = EOL;
     t_state current_state = START;
     static int end_of_file = 0;
@@ -60,14 +63,16 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
         }
 
         //opakovany dedent
-        if (s_dedent >= 0) { //uroven na kterou se chci dostat je vetsi nez 0, jinak nema smysl resit dedent
+        if (s_dedent >= 0) { // Uroven na ktoru sa chcem dostat je vacsia nez 0, inak nema zmysel riesit dedent
             current_state = INDENT;
             whitespace = s_dedent;
         }
 
         /// KONECNY AUTOMAT
+        //  Podla prveho nacitaneho tokenu urcim, do akeho stavu sa dostanem, akonahle som v nejakom konkretnom stave,
+        //  kontrolujem, ci nacitane znaky vyhovuju udajnemu typu tokenu
         switch (current_state) {
-            case START:
+            case START: //  ZACIATOCNY STAV TOKENU
                 if(*newline == 1) {
                     if (character == ' ')
                         whitespace++;
@@ -76,8 +81,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
                     current_state = INDENT;
 
-                }else if (character == EOF) {
-                    //dedent na konci souboru
+                }else if (character == EOF) { // Dedent na konci suboru                
                     ungetc(character, buffer);
                     current_state = INDENT;
                     end_of_file = 1;
@@ -95,7 +99,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     current_state = LINE_COMM;
                 }
                 else if (character == '=') {
-                    if (previous_state == EOL && whitespace == 0) return LEX_ERROR; // JE TOTO LEX ERROR? osetri co ak previous t_state nieje premenna / ID ?
+                    if (previous_state == EOL && whitespace == 0) return LEX_ERROR; 
                     else {
                         if ((add_char_token(current_token, '=')) != OK) return INTERNAL_ERROR;
                         current_state = ASSIGN;
@@ -148,7 +152,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else if (isdigit(character)) {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     if (character == '0') {
-                        zeroIntVal = 1; // uz som zadal 0, dalsia v ramci jedneho cisla hned za sebou byt nemoze
+                        zeroIntVal = 1; // Uz som zadal 0, dalsia 0 v ramci jedneho cisla hned za sebou byt nemoze
                     }
                     current_state = INTEGER;
                 }
@@ -166,27 +170,27 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 previous_state = START;
                 break;
 
-            case INDENT:
+            case INDENT: // Riesenie indentacie podla zadania
                 *newline = 0;
                 s_dedent = -1;
-                if (character == ' ') {
+                if (character == ' ') { // Zvysenie indentacie
                     whitespace += 1;
                     current_state = INDENT;
                 }
                 else{
-                    if (character == '#') {
+                    if (character == '#') { // Komentar
                         current_state = LINE_COMM;
                         break;
                     }
 
-                    if (empty_line && character == '\n') {
+                    if (empty_line && character == '\n') { // Znak konca riadku
                         current_state = START;
                         *newline = 1;
                         break;
                     }
 
-                    if (whitespace == indentStack->top->indent) { // je toto ok porovnanie?
-                        ungetc(character, buffer); //musim vracet nacty znak
+                    if (whitespace == indentStack->top->indent) {
+                        ungetc(character, buffer); // Musim vracat nacitany znak
                         current_state = START;
                     }
                     else if (whitespace > indentStack->top->indent) {
@@ -201,10 +205,10 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                         current_state = DEDENT;
 
                         if ((indentStack->top->next == NULL) && (whitespace != indentStack->top->indent)) return LEX_ERROR;
-                        if (whitespace > indentStack->top->next->indent) return LEX_ERROR; //mam dedent ale na spatnou uroven
+                        if (whitespace > indentStack->top->next->indent) return LEX_ERROR; // Mam dedent ale na zlu uroven
 
                         /// GENEROVANIE DEDENTU, OK INDENTACIA
-                        add_indent(current_token, dededentPopCount); // V PRIPADE DEDENTU UKLADAM DO DAT POCET NUTNYCH POPOV
+                        add_indent(current_token, dededentPopCount); // V pripade dedentu ukladam do dat pocet nutnych popov
                         return_token(current_state, current_token, character, buffer, &empty_line);
                         indentStackPop(indentStack);
                         s_dedent = whitespace;
@@ -226,10 +230,10 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else current_state = LINE_COMM;
                 break;
 
-            case DOCSTR_BEGIN:
+            case DOCSTR_BEGIN: // Dokumentacny retazec, skrz spravnu kontrolu vstupnych a vystupnych uvodzoviek, je rozdeleny na  viac stavov
                 if (character == '"') {
                     if ((character = fgetc(buffer)) == '"' ) {
-                        current_state = DOCSTR_INPUT;
+                        current_state = DOCSTR_INPUT; //  Boli zadane """ takze viem,  ze rozpoznavam token DOCSTR
                     }
                     else return LEX_ERROR;
                 }
@@ -255,7 +259,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 }
                 break;
 
-            case DOCSTR_BCKSLSH:
+            case DOCSTR_BCKSLSH: // Duplicitny stav z klasickeho retazca
                 current_state =  DOCSTR_INPUT;
                 if (character == '"') {
                     if ((add_char_token(current_token, '\\')) != OK) return INTERNAL_ERROR;
@@ -303,12 +307,12 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR;
                 break;
 
-            case DOCSTR: // iba return token
+            case DOCSTR: // Stav iba vrati token, koncovy stav
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
                 return OK;
 
-            case STR_INPUT:
+            case STR_INPUT: // Zadavanie samotneho retazca
                 if (character == '\\') {
                     if ((add_char_token(current_token, '\\')) != OK) return INTERNAL_ERROR;
                     current_state = STR_BCKSLSH;
@@ -335,12 +339,12 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR;
                 break;
 
-            case STR:
+            case STR: // Retazec je pripraveny na vratenie kompletneho tokenu
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
                 return OK;
 
-            case STR_BCKSLSH:
+            case STR_BCKSLSH: // V retazci bol zadany escape znak (/)
                 current_state = STR_INPUT;
                 if (character == 'x') {
                     current_state = STR_HEX;
@@ -397,19 +401,19 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR;
                 break;
 
-            case EXPR_T:
+            case EXPR_T: // Desatinne cislo s exponentom
                 if(character == '+' || character == '-') { // ak po e/E ide volitelne  +/-
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = EXPR_S;
                 }
-                else if (isdigit(character)) { // ak napr 1.045e3 -> ungetnem 3ku, a prejdem do stavu, pre exponent, ktory striktne ocakava cisla
+                else if (isdigit(character)) { // Ak napr 1.045e3 -> vratim na vstup 3, a prejdem do stavu pre exponent, ktory striktne ocakava cisla
                     ungetc(character, buffer);
                     current_state = EXPR_S;
                 }
                 else return LEX_ERROR;
                 break;
 
-            case EXPR_S:
+            case EXPR_S: // Vedecky format (e / E)
                 if(isdigit(character)) {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOUBLE;
@@ -418,11 +422,11 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR;
                 break;
 
-            case DOT:
+            case DOT:  // Nacital som . v exponente
                 if (isdigit(character)) {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOUBLE;
-                } else return LEX_ERROR; // MAM NACITANE NAPR: 8."ak na tejto pozicii nieje cislo, je to error."
+                } else return LEX_ERROR; // Mam nacitane cislo vo forme napr. 8. , ak character nieje cislo -> chyba
                 break;
 
             case EXCLAIM:
@@ -432,26 +436,26 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR; //LEXICAL
                 break;
 
-            case ID:
-                if((isalnum(character)) || character == '_') { // pokud je pismeno, cislo nebo podrzitko
+            case ID: // Stav pre identifikator premennej / funkcie
+                if((isalnum(character)) || character == '_') { // Ak je pismeno, cislo nebo podrzitko
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = ID;
                 }
                 else {
                     add_char_token(current_token, '\0');
-                    current_state = token_keyword(current_token->data); // Zjisteni jestli se jedna o klicove slovo
+                    current_state = token_keyword(current_token->data); // Zistenie ci sa jedna o klucove slovo
                     previous_state = current_state;
                     return_token(current_state, current_token, character, buffer, &empty_line);
                     return OK;
                 }
                 break;
 
-            case INTEGER:
+            case INTEGER: // Cele cislo
                 if (isdigit(character)) {
                     if (zeroIntVal == 1) return LEX_ERROR; //  pracujem s hodnotou 0x; kde x je dalsie cislo -> zly zapis cisla
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                 }
-                else if (character == '.') {
+                else if (character == '.') {  // Exponent
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOT;
                 }
@@ -466,7 +470,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 }
                 break;
 
-            case DOUBLE:
+            case DOUBLE: // Desatinne cislo
                 if(isdigit(character)) {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOUBLE;
@@ -481,8 +485,8 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     return OK;
                 }
                 break;
-
-            case LOG_EQ:
+            /// LOGICKE POROVNANIA
+            case LOG_EQ: 
             case LOG_NONEQ:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
@@ -513,7 +517,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
             case LOG_LEQ:
             case LOG_MEQ:
             case LOG_NEQ:
-            case ADD:
+            case ADD: // Tokeny operatorov
             case SUBSTRACT:
             case MULTIPLY:
                 previous_state = current_state;
@@ -533,24 +537,24 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
                 return OK;
-
-            case EOL:
+            
+            case EOL: // Nacitany koniec riadku
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
                 *newline = 1;
                 empty_line = 1;
                 return OK;
 
-            case L_BRAC:
+            case L_BRAC:   // Prava a lava zatvorka
             case R_BRAC:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
                 return OK;
 
-            case ASSIGN:
+            case ASSIGN: // Priradenie hodnoty
                 if (character == '=') {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
-                    current_state = LOG_EQ;
+                    current_state = LOG_EQ; // Ak som nacital este jeden znak = -> Token porovnania (==)
                 }
                 else {
                     previous_state = current_state;
