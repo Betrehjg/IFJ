@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include "parser.h"
-#include "scanner.h"
 #include "stack.h"
 #include "symtable.h"
+#include "code_gen.h"
 
-//#define NDEBUG
+//#define DEBUG
 
 int main() {
     //test
@@ -35,7 +35,10 @@ int main() {
     symtableInsertFunction(&shared_vars.glob_symtable, "ord", true, 2);
     symtableInsertFunction(&shared_vars.glob_symtable, "chr", true, 1);
 
-    #ifdef NDEBUG
+    //generovani hlavicky a vestavenych funkci
+    gen_prog_start();
+
+    #ifdef DEBUG
     do {
         D_GET_TOKEN();
     } while (shared_vars.c_token->type != LEX_EOF);

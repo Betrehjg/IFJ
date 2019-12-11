@@ -14,7 +14,7 @@
 
 typedef enum {
     // koncove stavy
-            ID, STR, DOCSTR, INTEGER, DOUBLE, LOG_EQ, LOG_NONEQ, LOG_MORE, LOG_LESS, LOG_LEQ, LOG_MEQ,
+            ID, STR, DOCSTR, INTEGER, DOUBLE, LOG_EQ, LOG_NONEQ, LOG_MORE, LOG_LESS, LOG_LEQ, LOG_MEQ, LOG_NEQ,
     ADD, SUBSTRACT, MULTIPLY, DIVIDE, IDIVIDE, EOL, L_BRAC, R_BRAC, ASSIGN, COMMA, LEX_EOF, COLON,  //LEX_ERR
 
     // klucove stavy
@@ -29,7 +29,7 @@ typedef enum {
 } t_state;
 
 static const char *token_state_string[] = {"ID", "STR", "DOCSTRING", "INTEGER", "DOUBLE", "LOG_EQ", "LOG_NONEQ", "LOG_MORE", "LOG_LESS,",
-                                           "LOG_LEQ", "LOG_MEQ", "ADD", "SUBSTRACT", "MULTIPLY", "DIVIDE", "IDIVIDE", "EOL", "L_BRAC", "R_BRAC",
+                                           "LOG_LEQ", "LOG_MEQ", "LOG_NEQ", "ADD", "SUBSTRACT", "MULTIPLY", "DIVIDE", "IDIVIDE", "EOL", "L_BRAC", "R_BRAC",
                                            "ASSIGN", "COMMA", "LEX_EOF", "COLON", "KW_DEF", "KW_ELSE", "KW_IF", "KW_NONE", "KW_PASS", "KW_RETURN",
                                            "KW_WHILE", "START", "LINE_COMM", "DOCSTR_INPUT", "DOCSTR_BEGIN", "DOCSR_END", "STR_INPUT", "STR_BCKLSG",
                                            "DOCSTR_BCKSLSH", "STR_HEX", "STR_HEX2", "EXPR_T", "EXPR_S", "DOT", "EXCLAIM", "INDENT", "DEDENT"};

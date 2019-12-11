@@ -1,6 +1,8 @@
 #include "parser.h"
 #include "scanner.h"
 #include "psa.h"
+#include "code_gen.h"
+#include "stack.h"
 #include <string.h>
 
 int prog() {
@@ -31,6 +33,9 @@ int func_def() {
         //ulozeni contentu nasledujiciho tokenu jako jmeno funkce
         COPY_TOKEN_DATA(name);
 
+        //TODO: generovani zacatku fuknce, (label pro preskoceni)
+        gen_func_start(name);
+
         CHECK_KEYWORD(ID);
         CHECK_KEYWORD(L_BRAC);
 
@@ -50,9 +55,11 @@ int func_def() {
 
         CHECK_KEYWORD(DEDENT);
 
+        gen_func_end(name);
+
         //odstraneni lokalni tabulky pro funkci
         symtableDispose(&shared_vars.loc_symtable);
-
+        free(name);
         return prog();
     } //<func_def> -> eps
     else if (shared_vars.c_token->type == LEX_EOF) {
@@ -68,7 +75,8 @@ int stat_list() {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        CHECK_RULE_WARGS(sp_expr(false));
+        //nic negeneruju
+        CHECK_RULE_WARGS(sp_expr(false, NULL));
 
         CHECK_KEYWORD(EOL);
 
@@ -84,7 +92,12 @@ int stat_list() {
     } //<stat_list> -> IF <sp_expr> : EOL INDENT <stat_list> DEDENT ELSE : EOL INDENT <stat_list> DEDENT  <stat>
     else if (shared_vars.c_token->type == KW_IF) {
         GET_TOKEN();
-        CHECK_RULE_WARGS(sp_expr(false));
+
+        t_token src_token;
+        CHECK_RULE_WARGS(sp_expr(false, &src_token));
+
+        //TODO: generovani zacatku if, vyhodnoceni podminky
+        gen_if_start();
 
         CHECK_KEYWORD(COLON);
         CHECK_KEYWORD(EOL);
@@ -98,15 +111,26 @@ int stat_list() {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
+        //TODO: generovani konce if(true), generovani else vetve
+        gen_else();
+
         CHECK_RULE(stat_list);
 
         CHECK_KEYWORD(DEDENT);
+
+        //TODO: generovani konce if
+        gen_if_end();
 
         return stat();
     } //<stat_list> -> WHILE <sp_expr> : EOL INDENT <stat_list> DEDENT <stat>
     else if (shared_vars.c_token->type == KW_WHILE) {
         GET_TOKEN();
-        CHECK_RULE_WARGS(sp_expr(false));
+
+        //TODO: generovani zacatku while
+        t_token src_token;
+        CHECK_RULE_WARGS(sp_expr(false, &src_token));
+
+        //TODO: generovani podminky
 
         CHECK_KEYWORD(COLON);
         CHECK_KEYWORD(EOL);
@@ -115,6 +139,8 @@ int stat_list() {
         CHECK_RULE(stat_list);
 
         CHECK_KEYWORD(DEDENT);
+
+        //TODO generovani konce while
 
         return stat();
     } //<stat_list> -> PASS EOL <stat>
@@ -136,6 +162,8 @@ int arg_def(int *argc) {
         if ((shared_vars.ret_value = sem_var_test(name, true, NULL, true)) != OK)
             return shared_vars.ret_value;
 
+        gen_func_arg(name);
+
         GET_TOKEN();
         return arg_def_next(argc);
     } //<arg_def> -> eps
@@ -152,7 +180,7 @@ int func_stat_list() {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        CHECK_RULE_WARGS(sp_expr(true));
+        CHECK_RULE_WARGS(sp_expr(true, NULL));
         CHECK_KEYWORD(EOL);
 
         return func_stat();
@@ -171,7 +199,11 @@ int func_stat_list() {
     else if (shared_vars.c_token->type == KW_IF) {
         GET_TOKEN();
 
-        CHECK_RULE_WARGS(sp_expr(true));
+        t_token src_token;
+        CHECK_RULE_WARGS(sp_expr(true, &src_token));
+
+        //TODO: generovani zacatku if a kontola podminky
+
         CHECK_KEYWORD(COLON);
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
@@ -183,15 +215,21 @@ int func_stat_list() {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
+        //TODO: generovani konce if(true) a zacatek else
+
         CHECK_RULE(func_stat_list);
         CHECK_KEYWORD(DEDENT);
 
+        //TODO: generovani konce if
         return func_stat();
     } //<func_stat_list> -> WHILE <sp_expr> : EOL INDENT <func_stat_list> DEDENT <func_stat>
     else if (shared_vars.c_token->type == KW_WHILE) {
         GET_TOKEN();
+        //TODO: generovani zacatku while
+        t_token src_token;
+        CHECK_RULE_WARGS(sp_expr(true, &src_token));
+        //TODO: kontrola podminky
 
-        CHECK_RULE_WARGS(sp_expr(true));
         CHECK_KEYWORD(COLON);
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
@@ -199,6 +237,7 @@ int func_stat_list() {
         CHECK_RULE(func_stat_list);
         CHECK_KEYWORD(DEDENT);
 
+        //TODO: generovani smycky a  konce while
         return func_stat();
     } //<func_stat_list> -> PASS EOL <func_stat>
     else if (shared_vars.c_token->type == KW_PASS) {
@@ -234,34 +273,35 @@ int func_stat() {
     return SYN_ERROR;
 }
 
-int sp_expr(bool local) {
+int sp_expr(bool local, t_token *src_token) {
     //<sp_expr> -> <expr>
     if (is_expr()) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
+        //TODO: ziskat src
         return expression(shared_vars.c_token, local);
     } //<sp_expr> -> <value>
     else if (IS_VALUE(c_token)) {
-        return value();
+        return value(local, src_token);
     }
 
     return SYN_ERROR;
 }
 
-int assign(bool local) {
+int assign(bool local, t_token *src_token) {
     //<asign> -> <sp_expr>
     if (is_expr() || IS_VALUE(c_token)) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        return sp_expr(local);
+        return sp_expr(local, src_token);
     } //<asign> -> ID <asign_value>
     else if (shared_vars.c_token->type == ID) {
-        COPY_TOKEN_DATA(name);
+        COPY_TOKEN_DATA(src_name);
         GET_TOKEN();
 
-        return assign_value(local, name);
+        return assign_value(local, src_name, src_token);
     }
 
     return SYN_ERROR;
@@ -283,8 +323,6 @@ int stat() {
 }
 
 int stat_2(bool local, char *name) {
-    tBSTNodePtr node;
-
     //<stat_2> -> = <asign>
     if (shared_vars.c_token->type == ASSIGN) {
         GET_TOKEN();
@@ -293,18 +331,26 @@ int stat_2(bool local, char *name) {
         if ((shared_vars.ret_value = sem_var_test(name, local, NULL, true)) != OK)
             return shared_vars.ret_value;
 
-        return assign(local);
+        t_token src_token;
+        CHECK_RULE_WARGS(assign(local, &src_token));
+
+        gen_assign(name, src_token, local);
+        return OK;
     } //<stat_2> -> ( <func_arg> )
     else if (shared_vars.c_token->type == L_BRAC) {
         GET_TOKEN();
 
         int argc = 0;
-        CHECK_RULE_WARGS(func_arg(local, &argc));
+        stack args_stack;
+        stackInit(&args_stack);
+        CHECK_RULE_WARGS(func_arg(local, &argc, &args_stack));
 
         //kontrola id funkce
         if ((shared_vars.ret_value = sem_func_test(name, false, argc)) != OK)
             return shared_vars.ret_value;
 
+        gen_func_call(name, argc, &args_stack, local);
+        stackDelete(&args_stack);
         GET_TOKEN();
         return OK;
     }
@@ -318,24 +364,35 @@ int return_value() {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        return assign(true);
+        t_token src_token;
+        CHECK_RULE_WARGS(assign(true, &src_token));
+
+        gen_assign("$ret_val", src_token, true);
+        return OK;
     } //<return_value> -> eps
     else if (shared_vars.c_token->type == EOL) {
+        t_token src_token;
+        src_token.type = KW_NONE;
+        gen_assign("$ret_val", src_token, true);
+
         return OK;
     }
 
     return SYN_ERROR;
 }
 
-int func_arg(bool local, int *argc) {
+int func_arg(bool local, int *argc, stack *args_stack) {
     //<func_arg> -> <asign> <func_arg_next>
     if (is_expr() || shared_vars.c_token->type == ID || IS_VALUE(c_token)) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        CHECK_RULE_WARGS(assign(local));
+        t_token src_token;
+        CHECK_RULE_WARGS(assign(local, &src_token));
+
+        stackPush(args_stack, src_token);
         (*argc)++;
-        return  func_arg_next(local, argc);
+        return  func_arg_next(local, argc, args_stack);
     } //<func_arg> -> eps
     else if (shared_vars.c_token->type == R_BRAC) {
         return OK;
@@ -344,44 +401,36 @@ int func_arg(bool local, int *argc) {
     return SYN_ERROR;
 }
 
-int value() {
-    //<value> -> INTEGER
-    if (shared_vars.c_token->type == INTEGER) {
-        GET_TOKEN();
-        return OK;
-    } //<value> -> DOUBLE
-    else if (shared_vars.c_token->type == DOUBLE) {
-        GET_TOKEN();
-        return OK;
-    } //<value> -> STRING
-    else if (shared_vars.c_token->type == STR) {
-        GET_TOKEN();
-        return OK;
-    }//<value> -> NONE
-    else if (shared_vars.c_token->type == KW_NONE) {
-        GET_TOKEN();
-        return OK;
-    } //<value> -> DOCSTR
-    else if (shared_vars.c_token->type == DOCSTR) {
+int value(bool local, t_token *src_token) {
+    //<value> -> INTEGER/STR/FLOAT/DOCSTR/NONE
+    if (IS_VALUE(c_token)) {
+        COPY_TOKEN(src_token);
         GET_TOKEN();
         return OK;
     }
-
     return SYN_ERROR;
 }
 
-int assign_value(bool local, char *name) {
+int assign_value(bool local, char *name, t_token *src_token) {
     //<asign_value> -> ( <func_arg> )
     if (shared_vars.c_token->type == L_BRAC) {
         GET_TOKEN();
 
         int argc = 0;
-        CHECK_RULE_WARGS(func_arg(local, &argc));
+        stack args_stack;
+        stackInit(&args_stack);
+        CHECK_RULE_WARGS(func_arg(local, &argc, &args_stack));
         CHECK_KEYWORD(R_BRAC);
 
         //kontrola id funkce
         if ((shared_vars.ret_value = sem_func_test(name, false, argc)) != OK)
             return shared_vars.ret_value;
+
+        gen_func_call(name, argc, &args_stack, local);
+
+        src_token->type = ID;
+        src_token->data_size = strlen("$ret_val");
+        src_token->data = "$ret_val";
 
         return OK;
     } //<asign_value> -> eps
@@ -389,36 +438,34 @@ int assign_value(bool local, char *name) {
         if ((shared_vars.ret_value = sem_var_test(name, local, NULL, false)) != OK)
             return shared_vars.ret_value;
 
+        src_token->type = ID;
+        src_token->data_size = strlen(name);
+        src_token->data = name;
+
         return OK;
     }
 
     return SYN_ERROR;
 }
 
-int func_arg_next(bool local, int *argc) {
+int func_arg_next(bool local, int *argc, stack *args_stack) {
     //<func_arg_next> -> eps
     if (shared_vars.c_token->type == R_BRAC) {
         return OK;
     } //<func_arg_next> -> , <asign> <func_arg_next>
     else if (shared_vars.c_token->type == COMMA) {
         GET_TOKEN();
-        CHECK_RULE_WARGS(assign(local));
+        t_token src_token;
+        CHECK_RULE_WARGS(assign(local, &src_token));
 
+        stackPush(args_stack, src_token);
         (*argc)++;
 
-        return func_arg_next(local, argc);
+        return func_arg_next(local, argc, args_stack);
     }
 
     return SYN_ERROR;
 }
-
-/*
-int expr() {
-    while (shared_vars.c_token->type != COLON && shared_vars.c_token->type != EOL) {
-        GET_TOKEN();
-    }
-    return OK;
-} */
 
 int arg_def_next(int *argc) {
     //<arg_def_next> -> eps
@@ -435,6 +482,8 @@ int arg_def_next(int *argc) {
         if ((shared_vars.ret_value = sem_var_test(name, true, NULL, true)) != OK)
             return shared_vars.ret_value;
 
+        gen_func_arg(name);
+
         return arg_def_next(argc);
     }
 
@@ -446,7 +495,9 @@ bool is_expr() {
         if ((shared_vars.ret_value = get_token(shared_vars.file, shared_vars.n_token, shared_vars.indet_stack, &shared_vars.new_line)) != OK)
             return false;
 
-        printf("%s - %s(%d)\n", token_state_string[shared_vars.n_token->type], shared_vars.n_token->data, shared_vars.n_token->data_size);
+        #ifdef DEBUG
+            printf("%s - %s(%d)\n", token_state_string[shared_vars.n_token->type], shared_vars.n_token->data, shared_vars.n_token->data_size);
+        #endif //DEBUG
     } else {
         shared_vars.ret_value = OK;
     }
@@ -471,7 +522,9 @@ int p_next_token() {
     } else {
         ret = get_token(shared_vars.file, shared_vars.c_token, shared_vars.indet_stack, &shared_vars.new_line);
 
-        printf("%s - %s(%d)\n", token_state_string[shared_vars.c_token->type], shared_vars.c_token->data, shared_vars.c_token->data_size);
+        #ifdef DEBUG
+            printf("%s - %s(%d)\n", token_state_string[shared_vars.c_token->type], shared_vars.c_token->data, shared_vars.c_token->data_size);
+        #endif //DEBUG
         return ret;
     }
 
@@ -526,7 +579,9 @@ int sem_var_test(char *name, bool local, void *content, bool define) {
             else if (nodeL != NULL)
                 return OK;
             else if (define == true) {
-                return symtableInsertVariable(&shared_vars.loc_symtable, name, NULL);
+                shared_vars.ret_value = symtableInsertVariable(&shared_vars.loc_symtable, name, NULL);
+                gen_def_var(name, local);
+                return shared_vars.ret_value;
             }
 
             //neni lokalni, kontrola globalni
@@ -546,6 +601,8 @@ int sem_var_test(char *name, bool local, void *content, bool define) {
             shared_vars.ret_value = symtableInsertVariable(&shared_vars.loc_symtable, name, NULL);
         else
             shared_vars.ret_value = symtableInsertVariable(&shared_vars.glob_symtable, name, NULL);
+
+        gen_def_var(name, local);
 
         return shared_vars.ret_value;
     }

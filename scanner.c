@@ -160,11 +160,11 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     current_state = INTEGER;
                 }
                 else if (character == '\'') {
-                    if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
+                    //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = STR_INPUT;
                 }
                 else if (character == '\"') {
-                    if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
+                   // if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOCSTR_BEGIN;
                 }
                 else if (character == ':') {
@@ -254,9 +254,9 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case DOCSTR_BEGIN:
                 if (character == '"') {
-                    if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
+                    //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     if ((character = fgetc(buffer)) == '"' ) {
-                        if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
+                        //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                         current_state = DOCSTR_INPUT;
                     }
                     else return LEX_ERROR;
@@ -323,9 +323,9 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case DOCSTR_END:
                 if (character == '"') {
-                    if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
+                    //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     if ((character = fgetc(buffer)) == '"' ) {
-                        if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
+                        //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                         current_state = DOCSTR;
                     }
                     else return LEX_ERROR;
@@ -344,7 +344,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     current_state = STR_BCKSLSH;
                 }
                 else if (character == '\'') {
-                    if ((add_char_token(current_token, '\'')) != OK) return INTERNAL_ERROR;
+                    //if ((add_char_token(current_token, '\'')) != OK) return INTERNAL_ERROR;
                     current_state = STR;
                 }
                 else if (character == '#') {
@@ -543,6 +543,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case LOG_LEQ:
             case LOG_MEQ:
+            case LOG_NEQ:
             case ADD:
             case SUBSTRACT:
             case MULTIPLY:
@@ -591,6 +592,13 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case COMMA:
             case COLON:
+                previous_state = current_state;
+                return_token(current_state, current_token, character, buffer, &empty_line);
+                return OK;
+
+            //case LEX_ERR:
+                //return LEX_ERROR; // lex.err
+
             case LEX_EOF:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
