@@ -54,13 +54,6 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
     init_token(current_token);
     while (1) {
         character = fgetc(buffer);
-        /*
-        if (character == EOF && current_state != START) {
-            if (end_of_file == 0) {
-                end_of_file = 1;
-            }
-            else return LEX_EOF;
-        } */
 
         if (end_of_file == 1) {
             current_state = LEX_EOF;
@@ -160,11 +153,9 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     current_state = INTEGER;
                 }
                 else if (character == '\'') {
-                    //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = STR_INPUT;
                 }
                 else if (character == '\"') {
-                   // if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOCSTR_BEGIN;
                 }
                 else if (character == ':') {
@@ -194,13 +185,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                         break;
                     }
 
-                    //add_indent(current_token, whitespace);
-                    //if (current_token->data[0] == indentStack->top->indent) { // je toto ok porovnanie?
                     if (whitespace == indentStack->top->indent) { // je toto ok porovnanie?
-                        /// NULOVY INDENT -> BUD NEGENERUJEM TOKEN ALEBO GENERUJEM INDENT s 0 ??
-                        //add_indent(current_token, whitespace);
-                        //return_token(current_state, current_token, character, buffer);
-                        //init_token(current_token);
                         ungetc(character, buffer); //musim vracet nacty znak
                         current_state = START;
                     }
@@ -211,31 +196,20 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                         return OK;
                     }
                     else if (whitespace < indentStack->top->indent) {
-                        //add_indent(current_token, whitespace);
-                        //do {
-                            /// GENEROVANIE DEDENTU
-                            //dededentPopCount++;
-                            //indentStackPop(indentStack);
-                            current_state = DEDENT;
 
-                            // if ((indentStack->top->next == NULL) && (current_token->data[0] != indentStack->top->indent)) return LEX_ERROR;
-                            // if (current_token->data[0] == indentStack->top->indent)
-                            if ((indentStack->top->next == NULL) && (whitespace != indentStack->top->indent)) return LEX_ERROR;
-                            if (whitespace > indentStack->top->next->indent) return LEX_ERROR; //mam dedent ale na spatnou uroven
+                        /// GENEROVANIE DEDENTU
+                        current_state = DEDENT;
 
-                            //if (whitespace == indentStack->top->indent) {
-                                /// GENEROVANIE DEDENTU, OK INDENTACIA
-                                add_indent(current_token, dededentPopCount); // V PRIPADE DEDENTU UKLADAM DO DAT POCET NUTNYCH POPOV
-                                return_token(current_state, current_token, character, buffer, &empty_line);
-                                indentStackPop(indentStack);
-                                s_dedent = whitespace;
-                                return OK;
-                            //}
+                        if ((indentStack->top->next == NULL) && (whitespace != indentStack->top->indent)) return LEX_ERROR;
+                        if (whitespace > indentStack->top->next->indent) return LEX_ERROR; //mam dedent ale na spatnou uroven
 
-                        //} while (current_token->data[0] != indentStack->top->indent);
+                        /// GENEROVANIE DEDENTU, OK INDENTACIA
+                        add_indent(current_token, dededentPopCount); // V PRIPADE DEDENTU UKLADAM DO DAT POCET NUTNYCH POPOV
+                        return_token(current_state, current_token, character, buffer, &empty_line);
+                        indentStackPop(indentStack);
+                        s_dedent = whitespace;
+                        return OK;
                     }
-                    //indentStackPush(indentStack, whitespace);
-                    //return_token(current_state, current_token, character, buffer);
                 }
                 break;
 
@@ -254,9 +228,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case DOCSTR_BEGIN:
                 if (character == '"') {
-                    //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     if ((character = fgetc(buffer)) == '"' ) {
-                        //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                         current_state = DOCSTR_INPUT;
                     }
                     else return LEX_ERROR;
@@ -323,9 +295,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case DOCSTR_END:
                 if (character == '"') {
-                    //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     if ((character = fgetc(buffer)) == '"' ) {
-                        //if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                         current_state = DOCSTR;
                     }
                     else return LEX_ERROR;
@@ -344,7 +314,6 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     current_state = STR_BCKSLSH;
                 }
                 else if (character == '\'') {
-                    //if ((add_char_token(current_token, '\'')) != OK) return INTERNAL_ERROR;
                     current_state = STR;
                 }
                 else if (character == '#') {
@@ -592,13 +561,6 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case COMMA:
             case COLON:
-                previous_state = current_state;
-                return_token(current_state, current_token, character, buffer, &empty_line);
-                return OK;
-
-            //case LEX_ERR:
-                //return LEX_ERROR; // lex.err
-
             case LEX_EOF:
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
@@ -607,7 +569,6 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
             default: // internal
                 return INTERNAL_ERROR;
         }
-
     }
     return OK;
 }
