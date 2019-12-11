@@ -99,11 +99,11 @@ int stat_list() {
     else if (shared_vars.c_token->type == KW_IF) {
         GET_TOKEN();
 
+        int idx;
         t_token src_token;
         CHECK_RULE_WARGS(sp_expr(false, &src_token));
 
-        //TODO: generovani zacatku if, vyhodnoceni podminky
-        gen_if_start();
+        gen_if_start(src_token.data, false, &idx);
 
         CHECK_KEYWORD(COLON);
         CHECK_KEYWORD(EOL);
@@ -117,15 +117,13 @@ int stat_list() {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
-        //TODO: generovani konce if(true), generovani else vetve
-        gen_else();
+        gen_else(idx);
 
         CHECK_RULE(stat_list);
 
         CHECK_KEYWORD(DEDENT);
 
-        //TODO: generovani konce if
-        gen_if_end();
+        gen_if_end(idx);
 
         return stat();
     } //<stat_list> -> WHILE <sp_expr> : EOL INDENT <stat_list> DEDENT <stat>
@@ -208,7 +206,8 @@ int func_stat_list(char *func_name) {
         t_token src_token;
         CHECK_RULE_WARGS(sp_expr(true, &src_token));
 
-        //TODO: generovani zacatku if a kontola podminky
+        int cnt;
+        gen_if_start(src_token.data, true, &cnt);
 
         CHECK_KEYWORD(COLON);
         CHECK_KEYWORD(EOL);
@@ -221,12 +220,12 @@ int func_stat_list(char *func_name) {
         CHECK_KEYWORD(EOL);
         CHECK_KEYWORD(INDENT);
 
-        //TODO: generovani konce if(true) a zacatek else
+        gen_else(cnt);
 
         CHECK_RULE_WARGS(func_stat_list(func_name));
         CHECK_KEYWORD(DEDENT);
 
-        //TODO: generovani konce if
+        gen_if_end(cnt);
         return func_stat(func_name);
     } //<func_stat_list> -> WHILE <sp_expr> : EOL INDENT <func_stat_list> DEDENT <func_stat>
     else if (shared_vars.c_token->type == KW_WHILE) {
@@ -285,11 +284,11 @@ int sp_expr(bool local, t_token *src_token) {
         if (shared_vars.ret_value != OK) //kontrola chyby pri is_epr
             return shared_vars.ret_value;
 
-        //TODO: ziskat src
         src_token->type = INTEGER;
         src_token->data_size = 0;
         src_token->data = "";
-        return expression(shared_vars.c_token, local);
+
+        return expression(shared_vars.c_token, local, src_token);
     } //<sp_expr> -> <value>
     else if (IS_VALUE(c_token)) {
         return value(local, src_token);

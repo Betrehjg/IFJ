@@ -3,9 +3,10 @@
 //
 
 #include "stack.h"
+#include "parser.h"
 #include <stdio.h>
 #include <malloc.h>
-#include <mem.h>
+#include <string.h>
 
 /// 1)Funkcie pre prácu so zásobníkom:
 
@@ -205,6 +206,12 @@ int eStackPush (eStack *s, t_token * current_token, PSA_table_index_enum index, 
         pom->data_size = current_token->data_size;
         pom->table_symbol = tableSymbol;
         pom->index = index;
+
+        pom->src_token.type =shared_vars.c_token->type;
+        if ((pom->src_token.data = malloc(sizeof(char) * current_token->data_size)) == NULL)
+            return INTERNAL_ERROR; \
+        strcpy(pom->src_token.data, current_token->data);
+        pom->src_token.data_size = current_token->data_size;
 
         pom->next = s->top;
         s->top = pom;

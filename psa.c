@@ -6,6 +6,7 @@
 #include "scanner.h"
 #include "parser.h"
 #include "string.h"
+#include "code_gen.h"
 
 /// Precedencna tabulka: R (>), L (<), E (=), N (error)
 
@@ -232,18 +233,27 @@ static PSA_rules_enum check_rule (int symbolCount, eStack *pushdownS) {
  * Redukcia vyrazu / aplikovanue najdeneho pravidla
  */
 
-static int apply_rule(PSA_rules_enum rule, eStack *pushDownS) {
-
+static int apply_rule(PSA_rules_enum rule, eStack *pushDownS, bool local) {
+    static int counter = 0;
+    eItem *tmp;
+    char *tmp_name;
     switch (rule)
     {
         case OPERAND:
 
                 ///Menim hodnotu/ id na neterminal
 
-                if( eStackTopItem(pushDownS)->is_terminal){
+
+            if( eStackTopItem(pushDownS)->is_terminal){
                 eStackTopItem(pushDownS)->action = E;
                 eStackTopItem(pushDownS)->is_terminal = 0;
 
+                //generovani prirazeni
+                //TODO: kontrola mallocu .....
+                eStackTopItem(pushDownS)->var_name = malloc(strlen("%%psa_tmp_var") + 1 + 30);
+                sprintf(eStackTopItem(pushDownS)->var_name, "%%psa_tmp_var%d", counter++);
+                gen_def_var(eStackTopItem(pushDownS)->var_name, local);
+                gen_assign(eStackTopItem(pushDownS)->var_name, eStackTopItem(pushDownS)->src_token, local);
             } else return SYN_ERROR;
             return OK;
 
@@ -284,12 +294,19 @@ static int apply_rule(PSA_rules_enum rule, eStack *pushDownS) {
             // E -> E > E
         case E_MORE_E:
 
-                ///Pop 2 poloziek, poslednu nastavim na neterminal
+            tmp = eStackTopItem(pushDownS);
+            tmp_name = malloc(strlen("%%psa_tmp_var") + 1 + 30);
+            sprintf(tmp_name, "%%psa_tmp_var%d", counter++);
+            gen_def_var(tmp_name, local);
+            gen_aritm_op(rule, tmp->next->next->var_name, tmp->var_name, tmp_name, local);
 
-                eStackPop(pushDownS);
-                eStackPop(pushDownS);
-                eStackTopItem(pushDownS)->action = E;
-                eStackTopItem(pushDownS)->is_terminal = 0;
+            ///Pop 2 poloziek, poslednu nastavim na neterminal
+            eStackPop(pushDownS);
+            eStackPop(pushDownS);
+            eStackTopItem(pushDownS)->action = E;
+            eStackTopItem(pushDownS)->is_terminal = 0;
+            eStackTopItem(pushDownS)->var_name = tmp_name;
+
             return OK;
             // invalid operator
         default:
@@ -303,7 +320,7 @@ static int apply_rule(PSA_rules_enum rule, eStack *pushDownS) {
  * @return vysledok analyzy
  */
 
-static int psAnalysis (eStack *inputS, eStack *pushdownS) {
+static int psAnalysis (eStack *inputS, eStack *pushdownS, bool local) {
         if (!isEmpty(inputS)) {
 
                 PSA_operations_enum operation;
@@ -372,7 +389,7 @@ static int psAnalysis (eStack *inputS, eStack *pushdownS) {
                                         PSA_rules_enum rule;
 
                                         rule = check_rule(ruleCount, pushdownS);
-                                        apply_rule(rule, pushdownS);
+                                        apply_rule(rule, pushdownS, local);
                                         break;
 
                                 case N:
@@ -390,7 +407,7 @@ static int psAnalysis (eStack *inputS, eStack *pushdownS) {
  * @return result
  */
 
-int expression(t_token * current_token, bool local){
+int expression(t_token * current_token, bool local, t_token *src_token){
 
         int result;
         eStack * inputStack;
@@ -441,7 +458,14 @@ int expression(t_token * current_token, bool local){
 
         //samotna analyza s redukovanim vyrazu sa ulozi do result
 
-        result = psAnalysis(inputReverse, pushDownStack);
+        result = psAnalysis(inputReverse, pushDownStack, local);
+
+        if (!isEmpty(pushDownStack))
+        {
+            src_token->data = eStackTopItem(pushDownStack)->var_name;
+            src_token->type = ID;
+            src_token->data_size = strlen(src_token->data);
+        }
 
         eStackDelete(inputStack);
         eStackDelete(inputReverse);

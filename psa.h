@@ -90,6 +90,6 @@ typedef enum
  * @param data Pointer to parser's internal data. TODO
  * @return Given exit code.
  */
-int expression(t_token *, bool);
+int expression(t_token * current_token, bool local, t_token *src_token);
 
 #endif //PROJEKTIFJ19_PSA_H

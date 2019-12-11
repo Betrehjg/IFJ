@@ -1,6 +1,6 @@
 /**
  * @file: main.c
- * @authors:
+ * @authors: Matej Dubec, Samuel Spišák, Michal Zobaník, Libor Malínek
  */
 
 #include <stdio.h>

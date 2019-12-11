@@ -13,7 +13,9 @@ typedef struct exprItem {      /// struktura pre polozku zasobnika vyrazu
     PSA_operations_enum action;
     PSA_table_index_enum index;
     PSA_symbol_enum table_symbol;
-    char *data;              // ukazatetel na data
+    char *data;
+    t_token src_token; //ID, hodnota
+    char *var_name; //nazev promene ve ktere je ta vec
     int data_size;          //pocet znakov tokenu
     struct exprItem *next;                // dalsia polozka
 } eItem;

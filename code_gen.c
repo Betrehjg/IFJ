@@ -1,6 +1,6 @@
 /**
  * @file: code_gen.c
- * @authors:
+ * @authors: Matej Dubec, Samuel Spišák, Michal Zobaník, Libor Malínek
  *
  * zdrojovy soubor pro generovani IFJcode
  */
@@ -219,6 +219,7 @@ char *create_var(t_state type, char *cont, bool local) {
 
     switch(type) {
         case ID:
+            //rozsah promene
             if (strcmp(cont, "$ret_val") == 0)
                 scope = "TF@";
             else if (local)
@@ -298,16 +299,22 @@ int gen_func_start(char *func_name) {
     return OK;
 }
 
-int gen_if_start() {
+int gen_if_start(char *name, bool local, int *counter) {
+    static int cnt = 0;
+    char *var1 = create_var(ID, name, local);
+    fprintf(stdout, "JUMPIFEQ $if_else_%d %s bool@false\n", cnt, var1);
 
+    *counter = cnt++;
+    return OK;
 }
 
-int gen_else() {
-
+int gen_else(int idx) {
+fprintf(stdout, "JUMP $if_end_%d\n"
+                "LABEL $if_else_%d\n", idx, idx);
 }
 
-int gen_if_end() {
-
+int gen_if_end(int idx) {
+    fprintf(stdout, "LABEL $if_end_%d\n", idx);
 }
 
 int gen_func_arg(char *name) {
@@ -382,7 +389,7 @@ int gen_type_control(t_state type1, char *cont1, t_state type2, char *cont2, boo
                     "EQ GF@%%temp_op2 GF@%%temp_op4 string@float\n"
                     "AND GF@%%temp_op1 GF@%%temp_op1 GF@%%temp_op2\n"
                     "JUMPIFNEQ $type_test_convert2_%d GF@%%temp_op1 bool@true\n", var1, var2, counter);
-    if (type1 == ID)
+    if (type1 == ID) //pretypovani prvni hodnoty kdyz je to promena
         fprintf(stdout, "MOVE GF@%%temp_op1 %s\n"
                         "INT2FLOAT %s GF@%%temp_op1\n"
                         "TYPE GF@%%temp_op3 GF@%%temp_op1\n", var1, var1);
@@ -392,7 +399,7 @@ int gen_type_control(t_state type1, char *cont1, t_state type2, char *cont2, boo
                     "EQ GF@%%temp_op2 GF@%%temp_op4 string@int\n"
                     "AND GF@%%temp_op1 GF@%%temp_op1 GF@%%temp_op2\n"
                     "JUMPIFNEQ $type_test_check%d GF@%%temp_op1 bool@true\n", counter, counter);
-    if (type2 == ID)
+    if (type2 == ID) //pretypovani druhe hodnoty kdyz je to promena
         fprintf(stdout, "MOVE GF@%%temp_op2 %s\n"
                         "INT2FLOAT %s GF@%%temp_op2\n"
                         "TYPE GF@%%temp_op4 GF@%%temp_op1\n", var2, var2);
@@ -408,5 +415,56 @@ int gen_type_control(t_state type1, char *cont1, t_state type2, char *cont2, boo
     counter++;
 
     return OK;
+}
+
+int gen_aritm_op(PSA_rules_enum type, char *op1, char *op2, char *dest, bool local) {
+    char *var1 = create_var(ID, op1, local);
+    char *var2 = create_var(ID, op2, local);
+    char *dest_var = create_var(ID, dest, local);
+
+    switch (type) {
+        case E_PLUS_E:
+            fprintf(stdout,"ADD %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_MINUS_E:
+            fprintf(stdout,"SUB %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_MUL_E:
+            fprintf(stdout,"MUL %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_DIV_E:
+            fprintf(stdout,"DIV %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_IDIV_E:
+            fprintf(stdout,"IDIV %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_EQ_E:
+            fprintf(stdout,"EQ %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_NEQ_E:
+            fprintf(stdout,"EQ %s %s %s\n"
+                           "NOT %s %s\n", dest_var, var1, var2, dest_var, dest_var);
+            break;
+        case E_LEQ_E:
+            fprintf(stdout,"LT %s %s %s\n"
+                           "EQ GF@%%temp_op1 %s %s\n"
+                           "OR %s GF@%%temp_op1 %s\n", dest_var, var1, var2, var1, var2, dest_var, dest_var);
+            break;
+        case E_LESS_E:
+            fprintf(stdout,"LT %s %s %s\n", dest_var, var1, var2);
+            break;
+        case E_MEQ_E:
+            fprintf(stdout,"GT %s %s %s\n"
+                           "EQ GF@%%temp_op1 %s %s\n"
+                           "OR %s GF@%%temp_op1 %s\n", dest_var, var1, var2, var1, var2, dest_var, dest_var);
+            break;
+        case E_MORE_E:
+            fprintf(stdout,"GT %s %s %s\n", dest_var, var1, var2);
+            break;
+        default:
+            return INTERNAL_ERROR;
+    }
+
+return OK;
 }
 
