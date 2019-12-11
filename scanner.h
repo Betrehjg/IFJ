@@ -9,6 +9,6 @@
 #include "stack.h"
 
 t_state token_keyword ( char *str);
-int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int *newline);
+int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int *newline); // Funkcia vracajuca token
 
 #endif //PROJEKT_SCANNER_H
