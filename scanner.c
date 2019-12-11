@@ -69,8 +69,9 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
         }
 
         /// KONECNY AUTOMAT
-        //  Podla prveho nacitaneho tokenu urcim, do akeho stavu sa dostanem, akonahle som v nejakom konkretnom stave,
+        //  Podla prveho nacitaneho znaku urcim, do akeho stavu sa dostanem, akonahle som v nejakom konkretnom stave,
         //  kontrolujem, ci nacitane znaky vyhovuju udajnemu typu tokenu
+        //  character je nacitany znak
         switch (current_state) {
             case START: //  ZACIATOCNY STAV TOKENU
                 if(*newline == 1) {
@@ -88,7 +89,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     s_dedent = 0;
                 }
                 else if (character == '\n') {
-                    if ((add_char_token(current_token, '\n')) != OK) return INTERNAL_ERROR;
+                    if ((add_char_token(current_token, '\n')) != OK) return INTERNAL_ERROR; // pridam znak do struktury pre token
                     current_state = EOL;
                 }
                 else if (isspace(character)) {
@@ -145,11 +146,11 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     if ((add_char_token(current_token, '>')) != OK) return INTERNAL_ERROR;
                     current_state = LOG_MORE;
                 }
-                else if (isalpha(character) || character == '_') {
+                else if (isalpha(character) || character == '_') { // Identifikator -> funkcia / premenna
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = ID;
                 }
-                else if (isdigit(character)) {
+                else if (isdigit(character)) { // Cislo
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     if (character == '0') {
                         zeroIntVal = 1; // Uz som zadal 0, dalsia 0 v ramci jedneho cisla hned za sebou byt nemoze
@@ -196,7 +197,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     else if (whitespace > indentStack->top->indent) {
                         indentStackPush(indentStack, whitespace);
                         add_indent(current_token, whitespace);
-                        return_token(current_state, current_token, character, buffer, &empty_line);
+                        return_token(current_state, current_token, character, buffer, &empty_line);  // Vraciam kompletne nacitany token
                         return OK;
                     }
                     else if (whitespace < indentStack->top->indent) {
@@ -217,7 +218,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 }
                 break;
 
-            case LINE_COMM:
+            case LINE_COMM: // Riadkovy komentar
                 if (character == '\n') {
                     current_state = START;
 
@@ -240,7 +241,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR;
                 break;
 
-            case DOCSTR_INPUT:
+            case DOCSTR_INPUT: // Samotny dokumentacny retazec
                 if (character == '\n') {
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                     current_state = DOCSTR_INPUT;
@@ -267,37 +268,37 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                     if ((add_char_token(current_token, '3')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '4')) != OK) return INTERNAL_ERROR;
                 }
-                else if (character == 'n') {
+                else if (character == 'n') { // \n
                     if ((add_char_token(current_token, '\\')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '0')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '1')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '0')) != OK) return INTERNAL_ERROR;
                 }
-                else if (character == 't') {
+                else if (character == 't') { // \t
                     if ((add_char_token(current_token, '\\')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '0')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '0')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '9')) != OK) return INTERNAL_ERROR;
                 }
-                else if (character == '\'') {
+                else if (character == '\'') { // \t
                     if ((add_char_token(current_token, '\\')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '0')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '3')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '9')) != OK) return INTERNAL_ERROR;
                 }
-                else if (character == '\\') {
+                else if (character == '\\') {// \\ 
                     if ((add_char_token(current_token, '\\')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '0')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '9')) != OK) return INTERNAL_ERROR;
                     if ((add_char_token(current_token, '2')) != OK) return INTERNAL_ERROR;
                 }
-                else if (character > 31) {
+                else if (character > 31) {// Znak ktory mozem nacitat ako taky
                     if ((add_char_token(current_token, character)) != OK) return INTERNAL_ERROR;
                 }
                 else return LEX_ERROR;
                 break;
 
-            case DOCSTR_END:
+            case DOCSTR_END: // Koniec dokumentacneho retazca
                 if (character == '"') {
                     if ((character = fgetc(buffer)) == '"' ) {
                         current_state = DOCSTR;
@@ -382,9 +383,9 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 else return LEX_ERROR;
                 break;
 
-            case STR_HEX:
+            case STR_HEX: // Hexadecimalne zadane cislo
                 if(isxdigit(character)) {
-                    hex[0] = (char) character;
+                    hex[0] = (char) character; // Cele cislo zadane hexadecimalne ulozim do trojprvkoveho pola, pridam do obsahu tokenu
                     current_state = STR_HEX_2;
                 }
                 else return LEX_ERROR;
@@ -429,7 +430,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
                 } else return LEX_ERROR; // Mam nacitane cislo vo forme napr. 8. , ak character nieje cislo -> chyba
                 break;
 
-            case EXCLAIM:
+            case EXCLAIM: // ! - negacia
                 if (character == '=') {
                     current_state = LOG_NONEQ;
                 }
@@ -517,7 +518,8 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
             case LOG_LEQ:
             case LOG_MEQ:
             case LOG_NEQ:
-            case ADD: // Tokeny operatorov
+            // TOKENY OPERATOROV
+            case ADD:
             case SUBSTRACT:
             case MULTIPLY:
                 previous_state = current_state;
@@ -565,7 +567,7 @@ int get_token(FILE *buffer, t_token *current_token, ind_stack *indentStack, int 
 
             case COMMA:
             case COLON:
-            case LEX_EOF:
+            case LEX_EOF: // Koniec suboru
                 previous_state = current_state;
                 return_token(current_state, current_token, character, buffer, &empty_line);
                 return OK;
