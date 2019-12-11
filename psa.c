@@ -230,7 +230,7 @@ static PSA_rules_enum check_rule (int symbolCount, eStack *pushdownS) {
 
 
 /**
- * Redukcia vyrazu / aplikovanue najdeneho pravidla
+ * Funkcia na redukciu vyrazu podla najdeneho pravidla
  */
 
 static int apply_rule(PSA_rules_enum rule, eStack *pushDownS, bool local) {
@@ -257,10 +257,16 @@ static int apply_rule(PSA_rules_enum rule, eStack *pushDownS, bool local) {
             } else return SYN_ERROR;
             return OK;
 
-            // E -> E - E
-
-        case LBR_E_RBR:
             // E -> (E)
+        case LBR_E_RBR:
+                
+                pushDownS->top->next->next->table_symbol = pushDownS->top->next->table_symbol;
+
+                eStackPop(pushDownS);
+                eStackPop(pushDownS);
+                eStackTopItem(pushDownS)->action = E;
+                eStackTopItem(pushDownS)->is_terminal = 0;
+                return OK;
 
         case E_PLUS_E:
 
@@ -385,11 +391,13 @@ static int psAnalysis (eStack *inputS, eStack *pushdownS, bool local) {
                                             && eStackTopItem(pushdownS)->is_terminal) {
                                                 ruleCount = 1;
                                         } else ruleCount = 3;
-
+                                        
                                         PSA_rules_enum rule;
-
                                         rule = check_rule(ruleCount, pushdownS);
-                                        apply_rule(rule, pushdownS, local);
+
+                                        int rule_result = apply_rule(rule, pushdownS, local);
+                                        if(rule_result != OK) return rule_result;
+
                                         break;
 
                                 case N:
