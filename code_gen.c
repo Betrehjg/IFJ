@@ -108,9 +108,13 @@ void gen_len_decl () {
                     "DEFVAR LF@%%argc\n"
                     "POPS LF@%%argc\n"
                     "POPS LF@arg\n"
+                    "TYPE GF@%%temp_op1 LF@arg\n"
+                    "JUMPIFNEQ $len_error GF@%%temp_op1 string@string\n"
                     "STRLEN LF@$ret_val LF@arg\n"
                     "POPFRAME\n"
-                    "RETURN\n\n");
+                    "RETURN\n"
+                    "LABEL $len_error\n"
+                    "EXIT int@4\n\n");
 }
 
 void gen_chr_decl () {
@@ -122,9 +126,19 @@ void gen_chr_decl () {
                     "DEFVAR LF@%%argc\n"
                     "POPS LF@%%argc\n"
                     "POPS LF@i\n"
+                    "TYPE GF@%%temp_op1 LF@i\n"
+                    "JUMPIFNEQ $chr_error GF@%%temp_op1 string@int\n"
+                    "LT GF@%%temp_op1 LF@i int@0\n"
+                    "JUMPIFNEQ $chr_error2 GF@%%temp_op1 bool@true\n"
+                    "GT GF@%%temp_op LF@i int@255\n"
+                    "JUMPIFNEQ $chr_error2 GF@%%temp_op1 bool@true\n"
                     "INT2CHAR LF@$ret_val LF@i\n"
                     "POPFRAME\n"
-                    "RETURN\n\n");
+                    "RETURN\n"
+                    "LABEL $chr_error2\n"
+                    "EXIT int@58\n"
+                    "LABEL $chr_error\n"
+                    "EXIT int@4\n\n");
 }
 
 
@@ -138,6 +152,10 @@ void gen_ord_decl () {
                     "POPS LF@s\n"
                     "DEFVAR LF@i\n"
                     "POPS LF@i\n"
+                    "TYPE GF@%%temp_op1 LF@i\n"
+                    "JUMPIFNEQ $ord_error GF@%%temp_op1 string@int\n"
+                    "TYPE GF@%%temp_op1 LF@i\n"
+                    "JUMPIFNEQ $ord_error GF@%%temp_op1 string@string\n"
                     "DEFVAR LF@slen\n"
                     "DEFVAR LF@$ret_val\n"
                     "PUSHS LF@s\n"
@@ -159,7 +177,9 @@ void gen_ord_decl () {
                     "MOVE LF@$ret_val nil@nil\n"
                     "LABEL END_ORD\n"
                     "POPFRAME\n"
-                    "RETURN\n\n");
+                    "RETURN\n"
+                    "LABEL $ord_error\n"
+                    "EXIT int@4\n\n");
 }
 
 void gen_substr_decl () {
@@ -178,6 +198,12 @@ void gen_substr_decl () {
                     "POPS LF@s\n"
                     "POPS LF@i\n"
                     "POPS LF@n\n"
+                    "TYPE GF@%%temp_op1 LF@i\n"
+                    "JUMPIFNEQ $substr_error GF@%%temp_op1 string@int\n"
+                    "TYPE GF@%%temp_op1 LF@s\n"
+                    "JUMPIFNEQ $substr_error GF@%%temp_op1 string@string\n"
+                    "TYPE GF@%%temp_op1 LF@n\n"
+                    "JUMPIFNEQ $substr_error GF@%%temp_op1 string@int\n"
                     "# CALLING LEN FUNCTION\n"
                     "PUSHS LF@s\n"
                     "PUSHS int@1\n"
@@ -210,7 +236,9 @@ void gen_substr_decl () {
                     "MOVE LF@$ret_val nil@nil\n"
                     "LABEL END_SUBSTR\n"
                     "POPFRAME\n"
-                    "RETURN\n\n");
+                    "RETURN\n"
+                    "LABEL $substr_error\n"
+                    "EXIT int@4\n\n");
 }
 
 char *create_var(t_state type, char *cont, bool local) {
