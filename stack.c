@@ -173,7 +173,9 @@ void indentStackDelete (ind_stack *s) {
     }
 }
 
-/// Funkcie pre prácu so zásobníkom:
+///----------------------------------------------------------------------------------------------
+/// Samuel Spišák (xspisa02)
+/// Funkcie pre prácu s PSA zásobníkom:
 
 /**
  * Inicializuje sa zásobník pre expression.
@@ -188,8 +190,11 @@ void eStackInit (eStack *s) {
  * Vytvara z parametrov eItem a pushuje do zasobnika
  * Ak malo pamate, chyba.
  * @param s
- * @param token
- * @return
+ * @param current_token
+ * @param index 
+ * @param symbol
+ * @param isT - definuje ci je terminal
+ * @return OK ak v poriadku inak ERROR
  */
 
 int eStackPush (eStack *s, t_token * current_token, PSA_table_index_enum index, PSA_symbol_enum tableSymbol, int isT) {
@@ -283,8 +288,8 @@ void *eStackTop (eStack *s) {
 /**
  * Vracia ukazatel na eItem na vrchole.
  * NULL ak prazdny.
- * @param s
- * @return
+ * @param s stack
+ * @return s.top
  */
 
 eItem *eStackTopItem (eStack *s) {
@@ -293,8 +298,8 @@ eItem *eStackTopItem (eStack *s) {
 
 /**
  * Vyberie a vrati ukazatel na eItem na vrchole.
- * @param s
- * @return
+ * @param s stack
+ * @return eItem
  */
  ///NEPOUZIVAT!
 
@@ -308,7 +313,7 @@ eItem *eStackTopPop (eStack *s) {
 
 /**
  * Vyberie zo zasobniku vsetky polozky. (vyprazdni)
- * @param s
+ * @param s stack
  */
 void eStackDelete (eStack *s) {
     while (!isEmpty(s)) {
