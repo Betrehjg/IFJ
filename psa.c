@@ -304,6 +304,7 @@ static int apply_rule(PSA_rules_enum rule, eStack *pushDownS, bool local) {
             tmp_name = malloc(strlen("%%psa_tmp_var") + 1 + 30);
             sprintf(tmp_name, "%%psa_tmp_var%d", counter++);
             gen_def_var(tmp_name, local);
+            gen_type_control(ID, tmp->next->next->var_name, ID, tmp->var_name, local);
             gen_aritm_op(rule, tmp->next->next->var_name, tmp->var_name, tmp_name, local);
 
             ///Pop 2 poloziek, poslednu nastavim na neterminal
